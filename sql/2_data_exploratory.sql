@@ -1,7 +1,6 @@
 -- 1. How much the total revenue, number of orders, number of items sold, and number of customers over time?
 SELECT 
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-		ELSE (price + freight_value) END)::int AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -15,8 +14,7 @@ WITH monthly_growth_not_fixed AS (
 	-- In this CTE, May 2016 not included to the rows because no revenue in that month. We will fix it later.
 	SELECT 
 		DATE_TRUNC('month', order_purchase_timestamp) AS month_year, 
-		SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+		SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 		COUNT(DISTINCT o.order_id) AS total_order,
 		COUNT(product_id) AS total_items_sold,
 		COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -28,11 +26,7 @@ WITH monthly_growth_not_fixed AS (
 ),
 monthly_growth AS (
 	SELECT 
-		a.month_year, 
-		COALESCE(b.total_revenue, NULL) AS total_revenue,
-		COALESCE(b.total_order, NULL) AS total_order,
-		COALESCE(b.total_items_sold, NULL) AS total_items_sold,
-		COALESCE(b.total_customer, NULL) AS total_customer
+		a.month_year, total_revenue, total_order, total_items_sold, total_customer
 	FROM (
 		SELECT generate_series(
 			DATE_TRUNC('month', MIN(order_purchase_timestamp)),
@@ -62,8 +56,7 @@ ORDER BY 1;
 SELECT 
 	EXTRACT(DOW FROM order_purchase_timestamp) AS weekdays,
 	TO_CHAR(DATE_TRUNC('day', order_purchase_timestamp), 'Day') AS day_name,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -76,8 +69,7 @@ ORDER BY 1;
 
 -- 4. How do different product categories perform in terms of total revenue, number of orders, number of items sold, and number of customers?
 SELECT INITCAP(REPLACE(product_category_name_english,'_',' ')) AS product_category, 
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-		ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(p.product_id) AS total_items_sold,
 	COUNT(DISTINCT c.customer_unique_id) AS total_customer
@@ -93,8 +85,7 @@ ORDER BY 1;
 -- 5. What are the preferred payment types?
 SELECT 
 	INITCAP(REPLACE(op.payment_type,'_',' ')) AS payment_types,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -110,8 +101,7 @@ ORDER BY 2 DESC, 3 DESC, 4 DESC, 5 DESC;
 SELECT 
 	CASE WHEN c.customer_state = s.seller_state THEN 'Within-State Delivery'
 		ELSE 'Inter-State Delivery' END AS delivery_types,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -127,8 +117,7 @@ GROUP BY 1;
 SELECT 
 	CASE WHEN order_delivered_customer_date <= order_estimated_delivery_date THEN 'On-time Delivery'
 		ELSE 'Late Delivery' END AS delivery_timeliness,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -143,8 +132,7 @@ GROUP BY 1;
 (SELECT 
 	'customer' AS performance_based_on,
 	customer_state AS state,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -159,8 +147,7 @@ UNION ALL
 (SELECT 
 	'seller' AS performance_based_on,
 	seller_state AS state,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -178,8 +165,7 @@ LIMIT 3);
 (SELECT 
 	'customer' AS performance_based_on,
 	INITCAP(customer_city) AS city,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
@@ -194,8 +180,7 @@ UNION ALL
 (SELECT 
 	'seller' AS performance_based_on,
 	INITCAP(seller_city) AS city,
-	SUM(CASE WHEN payment_value IS NOT NULL THEN payment_value
-			ELSE (price + freight_value) END)::INT AS total_revenue,
+	SUM(COALESCE(payment_value, (price + freight_value)))::int AS total_revenue,
 	COUNT(DISTINCT o.order_id) AS total_order,
 	COUNT(product_id) AS total_items_sold,
 	COUNT(DISTINCT customer_unique_id) AS total_customer
