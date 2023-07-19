@@ -80,7 +80,8 @@ JOIN products AS p ON oi.product_id = p.product_id
 JOIN product_category_name_translation AS pc ON p.product_category_name = pc.product_category_name
 JOIN customers AS c ON o.customer_id = c.customer_id
 GROUP BY 1
-ORDER BY 2 DESC, 3 DESC, 4 DESC, 5 DESC;
+ORDER BY 2 DESC, 3 DESC, 4 DESC, 5 DESC
+LIMIT 7;
 
 -- 5. What are the preferred payment types?
 SELECT 
