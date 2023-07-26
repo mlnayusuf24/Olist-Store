@@ -14,3 +14,7 @@ The data is divided into multiple datasets for better understanding and organiza
 - olist_products_dataset: This dataset includes data about the products sold by Olist.
 - olist_sellers_dataset: This dataset includes data about the sellers that fulfilled orders made at Olist. Use it to find the seller's location and to identify which seller fulfilled each product.
 - product_category_name_translation: Translates the product_category_name to english.
+
+
+Medium: [Link](https://mlnayusuf24.medium.com/olist-store-exploratory-data-analysis-using-sql-63ca3c4b7a87),
+Tableau: [Link](https://public.tableau.com/views/E-CommerceDashboard_16859680703300/ExecutiveSummary?:language=en-US&:display_count=n&:origin=viz_share_link)
